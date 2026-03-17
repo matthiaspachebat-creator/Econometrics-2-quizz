@@ -1,0 +1,986 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ECO 562B — Econometrics 2 Quiz</title>
+
+<!-- MathJax for proper math rendering -->
+<script>
+  window.MathJax = {
+    tex: { inlineMath: [['\\(','\\)'], ['$','$']], displayMath: [['\\[','\\]'], ['$$','$$']] },
+    options: { skipHtmlTags: ['script','noscript','style','textarea','pre'] }
+  };
+</script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/3.2.2/es5/tex-chtml.min.js" crossorigin="anonymous"></script>
+
+<style>
+  :root {
+    --navy:   #1B3A6B;
+    --blue:   #2C5F9E;
+    --ltblue: #EBF2FC;
+    --gold:   #B8860B;
+    --green:  #1a7a4a;
+    --red:    #9B1C1C;
+    --ltgreen:#d4edda;
+    --ltred:  #f8d7da;
+    --grey:   #f5f5f5;
+    --dgrey:  #444;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Segoe UI', system-ui, sans-serif;
+    background: #f0f4f8;
+    color: #222;
+    min-height: 100vh;
+  }
+
+  /* ── Header ── */
+  header {
+    background: var(--navy);
+    color: white;
+    padding: 28px 32px 22px;
+    text-align: center;
+  }
+  header h1 { font-size: 1.8rem; letter-spacing: .5px; }
+  header p  { font-size: .95rem; opacity: .8; margin-top: 6px; }
+
+  /* ── Progress bar ── */
+  #progress-wrap {
+    background: rgba(255,255,255,.2);
+    height: 6px;
+    border-radius: 3px;
+    margin-top: 14px;
+    overflow: hidden;
+  }
+  #progress-bar {
+    height: 100%;
+    background: #f0c040;
+    border-radius: 3px;
+    transition: width .4s ease;
+    width: 0%;
+  }
+
+  /* ── Score bar ── */
+  #score-bar {
+    display: flex;
+    justify-content: center;
+    gap: 32px;
+    background: white;
+    border-bottom: 1px solid #dde4ee;
+    padding: 10px 32px;
+    font-size: .9rem;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    box-shadow: 0 2px 8px rgba(0,0,0,.07);
+  }
+  .stat { display: flex; align-items: center; gap: 6px; }
+  .stat-num { font-weight: 700; font-size: 1.1rem; }
+  .stat-num.correct { color: var(--green); }
+  .stat-num.wrong   { color: var(--red); }
+  .stat-num.pending { color: var(--blue); }
+
+  /* ── Main layout ── */
+  main {
+    max-width: 800px;
+    margin: 32px auto;
+    padding: 0 16px 60px;
+  }
+
+  /* ── Chapter badge ── */
+  .chapter-badge {
+    display: inline-block;
+    background: var(--navy);
+    color: white;
+    font-size: .75rem;
+    font-weight: 700;
+    letter-spacing: .6px;
+    text-transform: uppercase;
+    padding: 3px 10px;
+    border-radius: 12px;
+    margin-bottom: 10px;
+  }
+
+  /* ── Question card ── */
+  .card {
+    background: white;
+    border-radius: 12px;
+    padding: 28px 30px 22px;
+    box-shadow: 0 2px 12px rgba(0,0,0,.08);
+    margin-bottom: 28px;
+    border-left: 4px solid var(--blue);
+    transition: border-color .3s;
+  }
+  .card.answered-correct { border-left-color: var(--green); }
+  .card.answered-wrong   { border-left-color: var(--red); }
+
+  .q-number {
+    font-size: .8rem;
+    color: var(--dgrey);
+    margin-bottom: 6px;
+    font-weight: 600;
+    letter-spacing: .3px;
+  }
+  .q-text {
+    font-size: 1.05rem;
+    line-height: 1.65;
+    margin-bottom: 18px;
+    font-weight: 500;
+  }
+
+  /* ── Options ── */
+  .options { display: flex; flex-direction: column; gap: 9px; }
+  .opt {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 11px 15px;
+    border: 1.5px solid #d0d8e8;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background .15s, border-color .15s;
+    font-size: .97rem;
+    line-height: 1.5;
+  }
+  .opt:hover:not(.disabled) { background: var(--ltblue); border-color: var(--blue); }
+  .opt-letter {
+    min-width: 26px; height: 26px;
+    border-radius: 50%;
+    background: var(--ltblue);
+    color: var(--navy);
+    font-weight: 700;
+    font-size: .85rem;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+    transition: background .2s, color .2s;
+  }
+  .opt.correct-ans  { background: var(--ltgreen); border-color: var(--green); }
+  .opt.correct-ans  .opt-letter { background: var(--green); color: white; }
+  .opt.wrong-ans    { background: var(--ltred);   border-color: var(--red); }
+  .opt.wrong-ans    .opt-letter { background: var(--red); color: white; }
+  .opt.show-correct { background: var(--ltgreen); border-color: var(--green); opacity: .7; }
+  .opt.show-correct .opt-letter { background: var(--green); color: white; }
+  .opt.disabled     { cursor: default; }
+
+  /* ── Explanation ── */
+  .explanation {
+    display: none;
+    margin-top: 16px;
+    padding: 14px 16px;
+    border-radius: 8px;
+    font-size: .93rem;
+    line-height: 1.65;
+  }
+  .explanation.correct { background: #e8f5ee; border-left: 4px solid var(--green); color: #1a4a30; }
+  .explanation.wrong   { background: #fdf0f0; border-left: 4px solid var(--red);   color: #5a1010; }
+  .explanation .verdict { font-weight: 700; margin-bottom: 6px; font-size: 1rem; }
+
+  /* ── Results screen ── */
+  #results {
+    display: none;
+    text-align: center;
+    background: white;
+    border-radius: 12px;
+    padding: 48px 32px;
+    box-shadow: 0 2px 16px rgba(0,0,0,.1);
+  }
+  #results h2 { font-size: 1.6rem; color: var(--navy); margin-bottom: 8px; }
+  #score-display {
+    font-size: 4rem;
+    font-weight: 800;
+    color: var(--navy);
+    margin: 24px 0 8px;
+  }
+  #score-pct { font-size: 1.1rem; color: var(--dgrey); margin-bottom: 30px; }
+  .grade-badge {
+    display: inline-block;
+    padding: 10px 28px;
+    border-radius: 50px;
+    font-size: 1.1rem;
+    font-weight: 700;
+    margin-bottom: 32px;
+  }
+  .breakdown-title { font-weight: 700; color: var(--navy); margin-bottom: 12px; font-size: 1rem; }
+  .breakdown { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; margin-bottom: 32px; }
+  .ch-score {
+    background: var(--ltblue);
+    border: 1px solid #c0d0e8;
+    border-radius: 8px;
+    padding: 10px 16px;
+    font-size: .9rem;
+    min-width: 160px;
+    text-align: left;
+  }
+  .ch-score .ch-name { font-weight: 700; color: var(--navy); font-size: .83rem; margin-bottom: 3px; }
+  .ch-score .ch-frac { color: var(--dgrey); }
+  #restart-btn {
+    background: var(--navy);
+    color: white;
+    border: none;
+    padding: 14px 36px;
+    border-radius: 8px;
+    font-size: 1rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: background .2s;
+  }
+  #restart-btn:hover { background: var(--blue); }
+
+  /* ── Start screen ── */
+  #start-screen {
+    text-align: center;
+    background: white;
+    border-radius: 12px;
+    padding: 48px 32px;
+    box-shadow: 0 2px 16px rgba(0,0,0,.1);
+  }
+  #start-screen h2 { font-size: 1.5rem; color: var(--navy); margin-bottom: 14px; }
+  #start-screen p  { color: var(--dgrey); line-height: 1.7; margin-bottom: 10px; max-width: 540px; margin-left: auto; margin-right: auto; }
+  .tag-list { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; margin: 20px 0 30px; }
+  .tag {
+    background: var(--ltblue); border: 1px solid #b0c8e8;
+    color: var(--navy); padding: 5px 12px; border-radius: 20px; font-size: .84rem; font-weight: 600;
+  }
+  #start-btn {
+    background: var(--navy); color: white; border: none;
+    padding: 15px 44px; border-radius: 8px; font-size: 1.05rem;
+    font-weight: 700; cursor: pointer; transition: background .2s;
+  }
+  #start-btn:hover { background: var(--blue); }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>ECO 562B — Advanced Econometrics 2</h1>
+  <p>Paris Polytechnic Institute · C. Belzil · Micro-Econometrics Quiz</p>
+  <div id="progress-wrap"><div id="progress-bar"></div></div>
+</header>
+
+<div id="score-bar">
+  <div class="stat">📋 <span class="stat-num pending" id="stat-total">0</span> <span>answered</span></div>
+  <div class="stat">✅ <span class="stat-num correct" id="stat-correct">0</span> <span>correct</span></div>
+  <div class="stat">❌ <span class="stat-num wrong" id="stat-wrong">0</span> <span>wrong</span></div>
+</div>
+
+<main id="main-area">
+
+<!-- ══ START SCREEN ══ -->
+<div id="start-screen">
+  <h2>Ready to test yourself?</h2>
+  <p>This quiz covers all 11 chapters of ECO 562B. Questions test both theoretical understanding and practical knowledge of micro-econometric methods. Each answer includes a detailed explanation.</p>
+  <div class="tag-list">
+    <span class="tag">Ch1–2 · Binary Choice &amp; MLE</span>
+    <span class="tag">Ch3–4 · Multinomial Models</span>
+    <span class="tag">Ch5 · Simulation Methods</span>
+    <span class="tag">Ch6 · Tobit Models</span>
+    <span class="tag">Ch7 · Selection Models</span>
+    <span class="tag">Ch8 · Evaluation Methods</span>
+    <span class="tag">Ch9 · Treatment Effects &amp; Roy</span>
+    <span class="tag">Ch10 · Panel Discrete Choices</span>
+    <span class="tag" style="background:#fff3cd;border-color:#d4a017;color:#7a5000;">★ Ch11 · Duration Analysis</span>
+  </div>
+  <p><strong>44 questions</strong> · Multiple choice · Instant feedback</p>
+  <br>
+  <button id="start-btn" onclick="startQuiz()">Start Quiz →</button>
+</div>
+
+<!-- ══ QUIZ ══ -->
+<div id="quiz-area" style="display:none"></div>
+
+<!-- ══ RESULTS ══ -->
+<div id="results">
+  <h2>Quiz Complete!</h2>
+  <div id="score-display"></div>
+  <div id="score-pct"></div>
+  <div id="grade-badge-wrap"></div>
+  <p class="breakdown-title">Score by chapter:</p>
+  <div class="breakdown" id="breakdown"></div>
+  <button id="restart-btn" onclick="restartQuiz()">Restart Quiz</button>
+</div>
+
+</main>
+
+<script>
+const QUESTIONS = [
+
+  // ══════════════════════════════════════════════════════════════════
+  //  CH1–2 · BINARY CHOICE MODELS & MAXIMUM LIKELIHOOD
+  // ══════════════════════════════════════════════════════════════════
+
+  {
+    chapter: "Ch1–2 · Binary Choice & MLE",
+    text: "In the latent variable framework underlying the Probit model, individual \\(i\\) chooses option A if \\(Y_i^* > 0\\), where \\(Y_i^* = X_i\\beta + \\varepsilon_i\\). If \\(\\varepsilon_i \\sim \\mathcal{N}(0,1)\\), what is \\(\\Pr(Y_i = 1)\\)?",
+    options: [
+      "\\(\\Phi(-X_i\\beta)\\)",
+      "\\(1 - \\Phi(X_i\\beta)\\)",
+      "\\(\\Phi(X_i\\beta)\\)",
+      "\\(\\phi(X_i\\beta)\\)"
+    ],
+    correct: 2,
+    explanation: "\\(\\Pr(Y_i=1) = \\Pr(Y_i^*>0) = \\Pr(\\varepsilon_i > -X_i\\beta) = 1 - \\Phi(-X_i\\beta) = \\Phi(X_i\\beta)\\), using symmetry of the standard normal: \\(\\Phi(-c) = 1-\\Phi(c)\\). Note that \\(\\phi(\\cdot)\\) is the PDF, not the CDF — it would not give a valid probability for all values of \\(X_i\\beta\\)."
+  },
+  {
+    chapter: "Ch1–2 · Binary Choice & MLE",
+    text: "Why must the variance of \\(\\varepsilon_i\\) be normalised to 1 in the Probit model (i.e. why is \\(\\sigma=1\\) imposed)?",
+    options: [
+      "The normal distribution has unit variance by definition",
+      "Only the ratio \\(\\beta/\\sigma\\) is identified from the data; setting \\(\\sigma=1\\) is a normalisation that pins down the scale",
+      "Heteroskedasticity is ruled out by the exogeneity assumption",
+      "The MLE would not converge otherwise"
+    ],
+    correct: 1,
+    explanation: "From \\(\\Pr(Y=1) = \\Phi(X\\beta/\\sigma)\\), it is clear that parameters \\((\\beta, \\sigma)\\) enter only through the ratio \\(\\beta/\\sigma\\). Two different vectors \\((\\beta_1,\\sigma_1)\\) and \\((\\beta_2,\\sigma_2)\\) with \\(\\beta_1/\\sigma_1 = \\beta_2/\\sigma_2\\) give identical probabilities — the model is not identified. Fixing \\(\\sigma=1\\) is a conventional normalisation that resolves this. This means Probit coefficients are only comparable across models with the same \\(\\sigma\\) convention."
+  },
+  {
+    chapter: "Ch1–2 · Binary Choice & MLE",
+    text: "The log-likelihood for a binary choice model with \\(N\\) i.i.d. observations is \\(\\ell(\\beta) = \\sum_i \\ln F((2Y_i-1)X_i\\beta)\\). What is the MLE estimator \\(\\hat{\\beta}\\)?",
+    options: [
+      "It has a closed-form formula: \\(\\hat{\\beta} = (X'X)^{-1}X'Y\\)",
+      "It is obtained by setting the score \\(\\partial \\ell/\\partial\\beta = 0\\) and solving numerically (e.g. Newton–Raphson)",
+      "It minimises the sum of squared residuals",
+      "It exists only if \\(N > k\\) where \\(k\\) is the number of parameters"
+    ],
+    correct: 1,
+    explanation: "Unlike OLS, the binary choice MLE has no closed-form solution because the first-order conditions (the score equations) are nonlinear in \\(\\beta\\). The MLE is found by iterative numerical optimisation, most commonly Newton–Raphson: \\(\\hat{\\beta}^{(t+1)} = \\hat{\\beta}^{(t)} - [H(\\hat{\\beta}^{(t)})]^{-1} g(\\hat{\\beta}^{(t)})\\), where \\(H\\) is the Hessian and \\(g\\) is the score. The algorithm typically converges in 10–30 iterations. The condition \\(N>k\\) is always necessary but not sufficient for identification."
+  },
+  {
+    chapter: "Ch1–2 · Binary Choice & MLE",
+    text: "The marginal effect of a continuous regressor \\(X_k\\) on \\(\\Pr(Y_i=1)\\) in the Probit model is \\(\\phi(X_i\\beta)\\cdot\\beta_k\\). What is a key implication of this formula?",
+    options: [
+      "The marginal effect is constant across individuals, equal to \\(\\beta_k\\)",
+      "The sign of \\(\\beta_k\\) alone determines the sign of the marginal effect, but its magnitude varies with \\(X_i\\)",
+      "The marginal effect equals the parameter \\(\\beta_k\\) only at the mean of \\(X_i\\)",
+      "Marginal effects cannot be computed for binary regressors"
+    ],
+    correct: 1,
+    explanation: "Since \\(\\phi(X_i\\beta) > 0\\) always, the sign of the marginal effect is entirely determined by the sign of \\(\\beta_k\\). However, the magnitude \\(\\phi(X_i\\beta)\\cdot|\\beta_k|\\) depends on the full covariate vector \\(X_i\\) — it is largest near the centre of the distribution (where \\(X_i\\beta \\approx 0\\)) and shrinks toward the tails. This is why marginal effects in Probit/Logit must be averaged across individuals or evaluated at specific values (e.g. the sample mean)."
+  },
+  {
+    chapter: "Ch1–2 · Binary Choice & MLE",
+    text: "You estimate Probit, Logit, and OLS (Linear Probability Model) on the same binary outcome. Which of the following statements is most accurate?",
+    options: [
+      "Parameter estimates are identical across all three models",
+      "Parameter estimates differ substantially across models, but marginal effects evaluated at the mean are typically very similar",
+      "The LPM always gives the best fit because it is more flexible",
+      "The Logit always gives the largest marginal effects"
+    ],
+    correct: 1,
+    explanation: "Parameter estimates are not directly comparable: Probit \\(\\beta\\) are scaled by \\(1/\\sigma_\\varepsilon\\), while Logit parameters are scaled differently (logistic variance \\(=\\pi^2/3\\)). However, the implied marginal effects tend to be very close across Probit, Logit, and LPM for interior values of \\(X_i\\beta\\). The LPM's main weaknesses are predictions outside \\([0,1]\\) and heteroskedasticity, not lack of flexibility. The choice between Probit and Logit typically has little practical impact."
+  },
+  {
+    chapter: "Ch1–2 · Binary Choice & MLE",
+    text: "The Fisher Information matrix \\(\\mathcal{I}(\\theta)\\) plays a central role in the asymptotic theory of MLE. Which property does it satisfy?",
+    options: [
+      "\\(\\mathcal{I}(\\theta) = \\mathbb{E}\\left[\\frac{\\partial^2 \\ln f}{\\partial\\theta\\,\\partial\\theta'}\\right]\\) — it is the expected second derivative of the log-likelihood",
+      "\\(\\mathcal{I}(\\theta) = -\\mathbb{E}\\left[\\frac{\\partial^2 \\ln f}{\\partial\\theta\\,\\partial\\theta'}\\right] = \\mathbb{E}\\left[g(\\theta)g(\\theta)'\\right]\\) — two equivalent expressions for the information",
+      "\\(\\mathcal{I}(\\theta) = \\mathbb{E}[\\ln f(Y;\\theta)]\\) — the expected log-likelihood",
+      "\\(\\mathcal{I}(\\theta)\\) only exists for normally distributed outcomes"
+    ],
+    correct: 1,
+    explanation: "The Fisher information equals the negative expected Hessian: \\(\\mathcal{I}(\\theta) = -\\mathbb{E}[H(\\theta)] = -\\mathbb{E}[\\partial^2 \\ln f/\\partial\\theta\\,\\partial\\theta']\\). The information matrix equality states this also equals the expected outer product of the score: \\(\\mathcal{I}(\\theta) = \\mathbb{E}[g(\\theta)g(\\theta)']\\). Both expressions can be used to estimate the asymptotic variance of \\(\\hat{\\theta}_{mle}\\), which equals \\(\\mathcal{I}(\\theta_0)^{-1}/N\\). The Cramér–Rao lower bound says no unbiased estimator can have smaller variance."
+  },
+  {
+    chapter: "Ch1–2 · Binary Choice & MLE",
+    text: "The McFadden Pseudo-\\(R^2\\) is defined as \\(R^2_{\\text{pseudo}} = 1 - \\ell(\\hat{\\beta})/\\ell(\\hat{\\beta}_0)\\), where \\(\\hat{\\beta}_0\\) is the intercept-only model. A value of 0.25 is obtained. How should this be interpreted?",
+    options: [
+      "The model explains 25% of the variation in \\(Y_i\\), just like a standard \\(R^2\\)",
+      "The log-likelihood improved by 25% relative to the null model — values between 0.2 and 0.4 are considered a good fit",
+      "25% of predictions are correct",
+      "The model is equivalent to an OLS \\(R^2\\) of 0.25"
+    ],
+    correct: 1,
+    explanation: "The Pseudo-\\(R^2\\) measures the proportional improvement of the fitted log-likelihood over the null (intercept-only) log-likelihood. It cannot be interpreted as 'percent of variance explained' like OLS \\(R^2\\). McFadden (1974) suggested that values of 0.2–0.4 indicate a good model fit, analogous to \\(R^2\\) values of 0.4–0.8 in linear models. The Pseudo-\\(R^2\\) always lies in \\([0,1)\\), equals 0 for the null model, and approaches 1 only with perfect prediction."
+  },
+
+  // ══════════════════════════════════════════════════════════════════
+  //  CH3–4 · MULTINOMIAL MODELS
+  // ══════════════════════════════════════════════════════════════════
+
+  {
+    chapter: "Ch3–4 · Multinomial Models",
+    text: "In the Random Utility Model, individual \\(i\\) assigns utility \\(U_{ij} = V_{ij} + \\varepsilon_{ij}\\) to alternative \\(j\\). If \\(\\varepsilon_{ij} \\overset{\\text{i.i.d.}}{\\sim}\\) Extreme Value Type I, what is the resulting choice probability \\(P_{ij}\\)?",
+    options: [
+      "\\(P_{ij} = \\Phi(V_{ij} - V_{ik})\\) for each \\(k \\neq j\\)",
+      "\\(P_{ij} = \\exp(V_{ij}) / \\sum_{k=1}^J \\exp(V_{ik})\\)",
+      "\\(P_{ij} = V_{ij} / \\sum_k V_{ik}\\)",
+      "\\(P_{ij} = 1/J\\) regardless of \\(V_{ij}\\)"
+    ],
+    correct: 1,
+    explanation: "The key result of McFadden (1974): if error terms are i.i.d.  Extreme Value Type I (Gumbel), the choice probabilities have the simple multinomial logit form \\(P_{ij} = \\exp(V_{ij})/\\sum_k \\exp(V_{ik})\\). This closed-form expression is what makes the conditional/multinomial logit tractable. Without the i.i.d. EV1 assumption, the probability involves a \\((J-1)\\)-dimensional integral with no closed form. The i.i.d. assumption is the crucial driver of both tractability and the IIA property."
+  },
+  {
+    chapter: "Ch3–4 · Multinomial Models",
+    text: "What is the 'red bus / blue bus' problem, and which model does it illustrate?",
+    options: [
+      "It illustrates Nested Logit — by nesting bus alternatives together, their combined share is correct",
+      "It illustrates the Independence of Irrelevant Alternatives (IIA) failure of the Conditional Logit: adding a coloured copy of an existing alternative wrongly steals share from all other modes equally",
+      "It illustrates the identification problem in the multinomial probit model",
+      "It is an example where the Conditional Logit gives the correct answer because the error terms are independent"
+    ],
+    correct: 1,
+    explanation: "The IIA property of the Conditional Logit implies that odds ratios \\(P_{ij}/P_{ik} = \\exp(V_{ij}-V_{ik})\\) are independent of all other alternatives. Suppose 50% take car and 50% take the red bus. Now paint half the red buses blue. Intuitively, total bus share should remain 50% (25% red, 25% blue), with car share unchanged. But the Conditional Logit instead predicts car 33%, red bus 33%, blue bus 33%. The Nested Logit solves this by grouping the two bus types in one nest, allowing within-nest substitution to be different from cross-nest substitution."
+  },
+  {
+    chapter: "Ch3–4 · Multinomial Models",
+    text: "In the Nested Logit model, what parameter controls the degree of correlation within a nest?",
+    options: [
+      "The scale parameter \\(\\lambda_j \\in (0,1]\\): \\(\\lambda_j = 1\\) means independence (standard logit); \\(\\lambda_j < 1\\) means positive correlation within the nest",
+      "The coefficient \\(\\beta_j\\) of the nest-specific attribute",
+      "The inclusive value (log-sum) of the nest",
+      "The number of alternatives in the nest"
+    ],
+    correct: 0,
+    explanation: "The Nested Logit introduces a dissimilarity parameter \\(\\lambda_j \\in (0,1]\\) for each nest \\(j\\). When \\(\\lambda_j = 1\\), within-nest error terms are uncorrelated and the model reduces to standard Conditional Logit (IIA holds). As \\(\\lambda_j \\to 0\\), within-nest alternatives become perfect substitutes. The within-nest correlation between error terms equals \\(1 - \\lambda_j^2\\). Consistency with utility maximisation requires \\(\\lambda_j \\in (0,1]\\); values outside this range indicate misspecification. The inclusive value \\(\\ln \\sum_{k \\in \\text{nest}} \\exp(V_{ik}/\\lambda_j)\\) summarises the attractiveness of the nest."
+  },
+  {
+    chapter: "Ch3–4 · Multinomial Models",
+    text: "The Multinomial Logit model uses individual-specific regressors \\(X_i\\) with alternative-specific coefficients \\(\\beta_j\\). If there are \\(J=4\\) alternatives, how many coefficient vectors are estimated?",
+    options: [
+      "4, one for each alternative",
+      "3, because one alternative serves as the reference category (its coefficient vector is normalised to zero)",
+      "1, because all alternatives share the same coefficient",
+      "It depends on the number of regressors \\(k\\)"
+    ],
+    correct: 1,
+    explanation: "With individual-specific regressors, only differences in utility matter: \\(V_{ij} - V_{i,\\text{ref}} = X_i(\\beta_j - \\beta_{\\text{ref}})\\). Normalising \\(\\beta_{\\text{ref}} = 0\\) for one reference alternative (usually \\(j=1\\) or \\(j=J\\)), the model estimates \\(J-1 = 3\\) coefficient vectors. This is analogous to dummy variables: with \\(J\\) categories, you only need \\(J-1\\) dummies. The absolute level of utility is not identified; only differences matter. The Conditional Logit (alternative-specific attributes) estimates a single coefficient vector \\(\\beta\\) shared across all alternatives."
+  },
+  {
+    chapter: "Ch3–4 · Multinomial Models",
+    text: "In an Ordered Probit model, individual \\(i\\)'s observed outcome is \\(Y_i = j\\) if \\(\\mu_{j-1} < Y_i^* \\leq \\mu_j\\), where \\(Y_i^* = X_i\\beta + \\varepsilon_i\\). Why is it important that the thresholds \\(\\mu_j\\) are ordered?",
+    options: [
+      "To ensure the variance of \\(Y_i^*\\) is well-defined",
+      "To ensure that the choice probabilities \\(\\Pr(Y_i=j)\\) are all positive, since probability = \\(\\Phi(\\mu_j - X_i\\beta) - \\Phi(\\mu_{j-1} - X_i\\beta)\\) requires \\(\\mu_{j-1} < \\mu_j\\)",
+      "To guarantee that the MLE converges",
+      "Thresholds do not need to be ordered — they are estimated freely"
+    ],
+    correct: 1,
+    explanation: "The choice probability for outcome \\(j\\) is \\(\\Pr(Y_i=j) = \\Phi((\\mu_j-X_i\\beta)/\\sigma) - \\Phi((\\mu_{j-1}-X_i\\beta)/\\sigma)\\). For this to be a proper probability (non-negative), we need \\(\\mu_{j-1} < \\mu_j\\) for all \\(j\\). In estimation, this ordering constraint is imposed explicitly (or via a reparametrisation). The Ordered Probit is parsimonious relative to an unordered multinomial: it uses \\(J-1\\) threshold parameters plus the \\(k\\)-vector \\(\\beta\\), compared to \\((J-1)\\times k\\) parameters in the Multinomial Logit. The single \\(\\beta\\) exploits the ordinal structure."
+  },
+  {
+    chapter: "Ch3–4 · Multinomial Models",
+    text: "In the Poisson regression model for count data, the conditional mean is \\(\\mathbb{E}(Y_i|X_i) = \\lambda_i = \\exp(X_i\\beta)\\). If you regress the count of patent applications on R&D expenditure (in logs), what does \\(\\hat{\\beta}_{R\\&D}\\) represent?",
+    options: [
+      "The expected number of additional patents for each extra dollar of R&D",
+      "The elasticity: a 1% increase in R&D raises expected patents by \\(\\hat{\\beta}_{R\\&D}\\%\\)",
+      "The log-odds of filing a patent application",
+      "The probability that a firm files at least one patent"
+    ],
+    correct: 1,
+    explanation: "In the Poisson model with \\(\\ln(R\\&D)\\) as a regressor: \\(\\ln \\lambda_i = \\beta_0 + \\beta_{R\\&D} \\ln(R\\&D_i) + \\cdots\\), so \\(\\partial \\ln \\lambda_i / \\partial \\ln(R\\&D_i) = \\hat{\\beta}_{R\\&D}\\). This is exactly the elasticity of expected count with respect to R&D. More generally, \\(\\partial\\lambda_i/\\partial X_{ik} = \\lambda_i \\cdot \\beta_k\\) for a level regressor. The Poisson MLE is consistent even if the distribution is not truly Poisson, as long as the conditional mean is correctly specified — this is the \"quasi-MLE\" or CMLE property (Cameron & Trivedi)."
+  },
+
+  // ══════════════════════════════════════════════════════════════════
+  //  CH5 · SIMULATION-BASED METHODS
+  // ══════════════════════════════════════════════════════════════════
+
+  {
+    chapter: "Ch5 · Simulation-Based Methods",
+    text: "The Mixed Logit (Random Coefficient Logit) model avoids the IIA property. What is the fundamental mechanism by which it achieves this?",
+    options: [
+      "It uses a probit error structure instead of logistic errors",
+      "It allows the coefficient \\(\\beta_i\\) to vary across individuals, creating compound error terms that are correlated across alternatives",
+      "It groups alternatives into nests with correlated errors",
+      "It uses simulated data instead of real data"
+    ],
+    correct: 1,
+    explanation: "In the Mixed Logit, utility is \\(U_{ij} = X_j'\\beta_i + \\varepsilon_{ij}\\) where \\(\\beta_i = \\bar{\\beta} + (\\beta_i - \\bar{\\beta})\\). The compound error \\(\\nu_{ij} = \\varepsilon_{ij} + (\\beta_i - \\bar{\\beta})X_j\\) is correlated across alternatives \\(j\\) because the same individual-level deviation \\((\\beta_i - \\bar{\\beta})\\) enters all utilities. This breaks the IIA property: the ratio \\(P_{ij}/P_{ik}\\) depends on all alternatives because the individual-specific heterogeneity \\(\\beta_i\\) is integrated out. The unconditional probabilities require integrating over the distribution of \\(\\beta_i\\), which has no closed form — hence the need for simulation."
+  },
+  {
+    chapter: "Ch5 · Simulation-Based Methods",
+    text: "The Maximum Simulated Likelihood (MSL) estimator replaces the intractable likelihood \\(f(y_i|x_i;\\theta)\\) with a simulated approximation \\(\\hat{f}_S = \\frac{1}{S}\\sum_{s=1}^S h(y_i|x_i;\\theta,u_i^s)\\). For the MSL to be consistent, what condition must hold?",
+    options: [
+      "The number of simulations \\(S\\) must equal the sample size \\(N\\)",
+      "\\(S \\to \\infty\\) at any rate as \\(N \\to \\infty\\) — consistency holds as long as \\(S\\) grows",
+      "Both \\(S,N \\to \\infty\\) with \\(\\sqrt{N}/S \\to 0\\) — the simulation noise must shrink faster than \\(1/\\sqrt{N}\\)",
+      "The simulated draws \\(u_i^s\\) must be independent across individuals"
+    ],
+    correct: 2,
+    explanation: "Gouriéroux & Monfort (1991) showed that MSL is consistent and asymptotically normal if \\(S,N \\to \\infty\\) with \\(\\sqrt{N}/S \\to 0\\). The condition \\(\\sqrt{N}/S \\to 0\\) (equivalently, \\(S/\\sqrt{N} \\to \\infty\\)) ensures the simulation error becomes negligible relative to the sampling error. In practice, \\(S \\geq 100\\) is a common recommendation, with larger samples requiring more draws. The key insight is that the simulated log-likelihood is biased downward (due to Jensen's inequality applied to log), but the bias vanishes as \\(S \\to \\infty\\). Quasi-random sequences (Halton) can reduce the required \\(S\\) substantially."
+  },
+  {
+    chapter: "Ch5 · Simulation-Based Methods",
+    text: "Berry, Levinsohn & Pakes (1995) model demand for differentiated products. A key feature of their model is the unobserved product quality \\(\\xi_j\\). Why is it essential to include \\(\\xi_j\\), and how is it handled in estimation?",
+    options: [
+      "\\(\\xi_j\\) controls for the number of consumers; it is estimated by OLS as a product fixed effect",
+      "\\(\\xi_j\\) captures price endogeneity: price \\(p_j\\) is correlated with \\(\\xi_j\\) (firms charge more for higher-quality products), so IV methods using supply-side instruments (e.g. cost shifters, prices of the same product in other markets) are used to identify \\(\\alpha\\)",
+      "\\(\\xi_j\\) is the random coefficient on price; it is integrated out using Monte Carlo simulation",
+      "\\(\\xi_j\\) is unimportant — BLP assume it is orthogonal to all regressors"
+    ],
+    correct: 1,
+    explanation: "In the BLP model, utility is \\(U_{ij} = X_j\\beta - \\alpha_i p_j + \\xi_j + \\varepsilon_{ij}\\). Since firms set prices based on product quality \\(\\xi_j\\) (higher \\(\\xi_j \\Rightarrow\\) higher price), the price \\(p_j\\) is correlated with \\(\\xi_j\\). OLS would produce upward-biased price coefficients (downward-biased price sensitivity \\(\\alpha\\)). BLP use instruments — typically product characteristics of competing products (BLP instruments) or production cost shifters — to achieve exogenous variation in price. The model also features individual heterogeneity in price sensitivity (\\(\\alpha_i\\)), which is integrated out by simulation."
+  },
+
+  // ══════════════════════════════════════════════════════════════════
+  //  CH6 · TOBIT MODELS
+  // ══════════════════════════════════════════════════════════════════
+
+  {
+    chapter: "Ch6 · Tobit Models",
+    text: "Consider the standard Tobit model: \\(Y_i^* = X_i\\beta + \\varepsilon_i\\), \\(Y_i = \\max(0, Y_i^*)\\). If you regress the observed \\(Y_i\\) on \\(X_i\\) by OLS, what happens?",
+    options: [
+      "OLS on the full sample is unbiased because the censoring is accounted for in the model",
+      "OLS on the uncensored subsample (\\(Y_i>0\\)) is consistent since it uses only uncensored data",
+      "OLS on both the full sample and the uncensored subsample are inconsistent because censoring creates a non-zero conditional mean of the error term",
+      "OLS is only inconsistent on the full sample but consistent on the uncensored subsample"
+    ],
+    correct: 2,
+    explanation: "Both OLS estimators are inconsistent. On the full sample, \\(\\mathbb{E}(Y_i|X_i) = \\Phi(X_i\\beta/\\sigma)(X_i\\beta + \\sigma\\lambda_i)\\) is nonlinear in \\(X_i\\beta\\), so OLS misspecifies the functional form. On the uncensored subsample, \\(\\mathbb{E}(Y_i^*|Y_i^*>0, X_i) = X_i\\beta + \\sigma\\lambda(X_i\\beta/\\sigma)\\), which contains an omitted term (the Inverse Mills Ratio). Omitting \\(\\lambda_i\\) creates omitted variable bias. The correct approach is Tobit MLE, which jointly accounts for the discrete censoring probability and the continuous density of uncensored observations."
+  },
+  {
+    chapter: "Ch6 · Tobit Models",
+    text: "In the Tobit model, the marginal effect of \\(X_k\\) on the expected value of the observed \\(Y_i\\) (including zeros) is \\(\\partial\\mathbb{E}(Y_i|X_i)/\\partial X_{ik} = \\beta_k \\cdot \\Phi(X_i\\beta/\\sigma)\\). How does this compare to the marginal effect on \\(\\mathbb{E}(Y_i^*|X_i)\\)?",
+    options: [
+      "They are equal — censoring does not affect marginal effects",
+      "The marginal effect on \\(Y_i\\) is smaller (in absolute value) than on \\(Y_i^*\\): the factor \\(\\Phi(X_i\\beta/\\sigma) \\leq 1\\) attenuates the effect",
+      "The marginal effect on \\(Y_i\\) is larger because it accounts for the participation margin",
+      "The marginal effect on \\(Y_i\\) is \\(\\beta_k\\) regardless of censoring"
+    ],
+    correct: 1,
+    explanation: "The marginal effect on \\(Y_i^*\\) is simply \\(\\beta_k\\) (since \\(Y_i^* = X_i\\beta + \\varepsilon_i\\) is linear). For the observed censored variable, \\(\\partial\\mathbb{E}(Y_i)/\\partial X_{ik} = \\beta_k\\Phi(X_i\\beta/\\sigma)\\). Since \\(\\Phi(\\cdot) \\in (0,1)\\), the marginal effect on \\(Y_i\\) is always smaller in magnitude. The factor \\(\\Phi(X_i\\beta/\\sigma)\\) equals the proportion of uncensored observations, and can be interpreted as a participation probability. The marginal effect on \\(Y_i\\) can be further decomposed into: (1) an intensive margin (the effect on \\(Y_i^*\\) conditional on being positive) and (2) an extensive margin (the effect on \\(\\Pr(Y_i>0)\\))."
+  },
+  {
+    chapter: "Ch6 · Tobit Models",
+    text: "What is the key difference between a censored and a truncated sample?",
+    options: [
+      "In a censored sample, the dependent variable is replaced by a limit value but \\(X_i\\) is still observed; in a truncated sample, observations with \\(Y_i^* \\leq 0\\) are completely excluded from the dataset (neither \\(Y_i\\) nor \\(X_i\\) is observed)",
+      "In a censored sample, the dependent variable is unobserved; in a truncated sample, only the sign of \\(Y_i^*\\) is observed",
+      "Censoring occurs at the bottom of the distribution; truncation occurs at the top",
+      "There is no difference — censoring and truncation both lead to the same likelihood"
+    ],
+    correct: 0,
+    explanation: "This is a fundamental distinction. With censoring (Tobit): all \\(N\\) individuals are in the sample; for those with \\(Y_i^* \\leq 0\\), we observe \\(Y_i = 0\\) and their covariates \\(X_i\\). The censoring point is known. With truncation: observations with \\(Y_i^* \\leq 0\\) are entirely absent — we don't even know they exist. The Tobit MLE accounts for censoring through \\(\\ln\\Pr(Y_i=0)\\) terms. Truncated regression conditions on \\(Y_i^*>0\\) using the truncated normal density. The difference matters enormously for the likelihood and the regression function."
+  },
+
+  // ══════════════════════════════════════════════════════════════════
+  //  CH7 · SELECTION MODELS
+  // ══════════════════════════════════════════════════════════════════
+
+  {
+    chapter: "Ch7 · Selection Models",
+    text: "In the Heckman sample selection model, what is 'incidental truncation', and why is it different from Tobit censoring?",
+    options: [
+      "Incidental truncation occurs when \\(Y_{1i}\\) is observed only when a separate selection process \\(Y_{2i}=1\\) is satisfied — the truncation is generated by a model, not by a measurement limit; in Tobit, \\(Y_i\\) is set to 0 by a measurement rule",
+      "Incidental truncation is another name for Tobit censoring — they are the same",
+      "Incidental truncation occurs when the regressors are truncated, not the outcome",
+      "Incidental truncation applies only to panel data models"
+    ],
+    correct: 0,
+    explanation: "In Heckman's model, the outcome \\(Y_{1i}\\) (e.g., wages) is observed only when \\(Y_{2i}=1\\) (woman participates in the labour market). Crucially, we have no information about \\(Y_{1i}\\) for non-participants (neither the value nor any limit thereof). This is incidental truncation — the truncation is incidental to (caused by) the selection process, not by a measurement ceiling/floor. In Tobit, by contrast, we know the individual is in the sample but their outcome is censored at 0. Heckman's model requires a bivariate normal assumption and corrects via the Inverse Mills Ratio term."
+  },
+  {
+    chapter: "Ch7 · Selection Models",
+    text: "In the Heckman two-step estimator, the conditional expectation for the selected sample is \\(\\mathbb{E}(Y_{1i}|Y_{2i}=1) = X_{1i}'\\beta_1 + \\rho\\sigma_1\\lambda(X_{2i}'\\delta_2)\\). Why is the term \\(\\rho\\sigma_1\\lambda(\\cdot)\\) analogous to an omitted variable?",
+    options: [
+      "Because \\(\\lambda(\\cdot)\\) is always equal to zero under the null hypothesis of no selection",
+      "Because OLS on the selected sample omits \\(\\lambda_i\\), which is correlated with \\(X_{1i}\\), causing standard omitted variable bias of magnitude \\(\\rho\\sigma_1\\)",
+      "Because \\(\\lambda(\\cdot)\\) is a function of \\(Y_{1i}\\) and hence endogenous",
+      "Because the term is always positive, creating upward bias only"
+    ],
+    correct: 1,
+    explanation: "Running OLS of \\(Y_{1i}\\) on \\(X_{1i}\\) for the selected sample (\\(Y_{2i}=1\\)) omits the term \\(\\rho\\sigma_1\\lambda(X_{2i}'\\delta_2)\\). This omitted term is in the error, and if \\(X_{1i}\\) is correlated with \\(\\lambda(X_{2i}'\\delta_2)\\) — which it will be whenever \\(X_1\\) and \\(X_2\\) overlap — we get classic omitted variable bias. The bias equals \\(\\rho\\sigma_1\\) times the coefficient of \\(\\lambda_i\\) in an auxiliary regression of \\(\\lambda_i\\) on \\(X_{1i}\\). Heckman's two-step estimator corrects for this by explicitly including \\(\\hat{\\lambda}_i\\) as an additional regressor in step 2."
+  },
+  {
+    chapter: "Ch7 · Selection Models",
+    text: "For credible identification of the selection model, an exclusion restriction is recommended. What does this mean in practice?",
+    options: [
+      "At least one variable in \\(X_{2i}\\) (selection equation) should also appear in \\(X_{1i}\\) (outcome equation)",
+      "At least one variable in \\(X_{2i}\\) (selection equation) must be excluded from \\(X_{1i}\\) (outcome equation), serving as an instrument that drives selection without directly affecting the outcome",
+      "The two equations must have entirely different regressors",
+      "The exclusion restriction is only needed when \\(\\rho = 0\\)"
+    ],
+    correct: 1,
+    explanation: "Without an exclusion restriction, identification of \\(\\beta_1\\) and \\(\\rho\\sigma_1\\) relies entirely on the nonlinearity of the Inverse Mills Ratio \\(\\lambda(\\cdot)\\). This is \"identification by functional form\" — fragile and sensitive to the normality assumption. Including at least one variable in \\(X_{2i}\\) not in \\(X_{1i}\\) (e.g., number of children affects labour force participation but not the wage equation) provides genuine exogenous variation in selection. This variable is effectively an instrument: it shifts the probability of selection without directly affecting the outcome, generating variation in \\(\\lambda_i\\) independent of \\(X_{1i}\\)."
+  },
+
+  // ══════════════════════════════════════════════════════════════════
+  //  CH8 · POLICY EVALUATION METHODS
+  // ══════════════════════════════════════════════════════════════════
+
+  {
+    chapter: "Ch8 · Policy Evaluation",
+    text: "In a Randomised Control Trial (RCT), assignment to treatment is random. Does randomisation guarantee internal validity? Does it guarantee external validity?",
+    options: [
+      "Yes to both — randomisation is the gold standard for causal inference in all settings",
+      "Yes to internal validity (no selection bias in the study sample), but not necessarily to external validity — results may not generalise if the study population or context differs from the target population",
+      "No to internal validity because attrition can still bias results; yes to external validity",
+      "Neither — RCTs are only valid for medical experiments"
+    ],
+    correct: 1,
+    explanation: "Randomisation ensures \\(\\mathbb{E}(Y_{0i}|D_i=1) = \\mathbb{E}(Y_{0i}|D_i=0)\\), eliminating selection bias. This gives internal validity: the difference in means is an unbiased estimate of ATE (= ATT under random assignment). However, external validity — generalisability to different populations or contexts — is not guaranteed by randomisation. A clinical trial on a selected volunteer sample, a field experiment in one country, or a programme with a different take-up rate may all produce different effects when scaled up. Additionally, randomisation itself can change behaviour (Hawthorne effect, general equilibrium effects)."
+  },
+  {
+    chapter: "Ch8 · Policy Evaluation",
+    text: "The Wald estimator for IV with a binary instrument \\(Z_i \\in \\{0,1\\}\\) is \\(\\hat{\\alpha}_{IV} = [\\bar{Y}_{Z=1} - \\bar{Y}_{Z=0}] / [\\bar{D}_{Z=1} - \\bar{D}_{Z=0}]\\). Under the Imbens–Angrist assumptions, what does this estimate?",
+    options: [
+      "The Average Treatment Effect (ATE) in the full population",
+      "The Average Treatment Effect on the Treated (ATT)",
+      "The Local Average Treatment Effect (LATE) for compliers — those whose treatment status is changed by the instrument",
+      "The marginal treatment effect for individuals at the threshold"
+    ],
+    correct: 2,
+    explanation: "Under (1) the exclusion restriction (\\(Z\\) affects \\(Y\\) only through \\(D\\)), (2) monotonicity (\\(D_i(1) \\geq D_i(0)\\) for all \\(i\\)), and (3) instrument relevance, the Wald estimator consistently estimates the LATE: \\(\\mathbb{E}(Y_{1i}-Y_{0i}|D_i(1)>D_i(0))\\) — the average treatment effect for compliers. Compliers are the subgroup whose treatment status changes from 0 to 1 when \\(Z\\) changes from 0 to 1. LATE differs from ATE (which averages over all individuals) and ATT (which averages over the treated). LATE equals ATE only if treatment effects are homogeneous."
+  },
+  {
+    chapter: "Ch8 · Policy Evaluation",
+    text: "A government gives college scholarships to all students with high school GPA ≥ 3.0. You use a Regression Discontinuity Design (RDD) to evaluate the effect on earnings. What is the key identifying assumption?",
+    options: [
+      "Students with GPA just above 3.0 are identical in all observed and unobserved characteristics to students just below 3.0 — the assignment is as good as random near the cutoff",
+      "All students with GPA ≥ 3.0 attend college — there is 100% compliance",
+      "The GPA threshold was determined randomly by the government",
+      "Earnings are independent of GPA conditional on receiving the scholarship"
+    ],
+    correct: 0,
+    explanation: "The RDD identifying assumption is continuity: all relevant characteristics (both observed and unobserved) of individuals vary continuously around the GPA threshold \\(c = 3.0\\). The causal effect is identified from the discontinuous jump in the outcome at \\(c\\). If individuals can precisely manipulate their GPA to just cross the threshold (e.g., by getting a regraded paper), the continuity assumption fails. This is tested using McCrary's (2008) density test — bunching just above the cutoff suggests manipulation. The RDD estimates a local ATE at the cutoff, which may not generalise to the full population (external validity concern)."
+  },
+  {
+    chapter: "Ch8 · Policy Evaluation",
+    text: "The Difference-in-Differences (DiD) estimator is \\(\\hat{\\tau}_{DiD} = (\\bar{Y}_T^{post} - \\bar{Y}_T^{pre}) - (\\bar{Y}_C^{post} - \\bar{Y}_C^{pre})\\). What is the key identifying assumption, and how is it typically tested?",
+    options: [
+      "The treatment and control groups must have the same mean outcome in the pre-period; tested by a \\(t\\)-test on pre-period means",
+      "Parallel trends: absent treatment, the average outcome of the treated group would have followed the same time trend as the control group; tested by examining pre-treatment trends (placebo tests using pre-treatment periods as false post-periods)",
+      "The treatment is randomly assigned in the pre-period; tested by a randomisation check",
+      "There is no selection into treatment; tested by comparing group sizes"
+    ],
+    correct: 1,
+    explanation: "DiD removes both (1) time-invariant group differences and (2) common time trends. The key assumption — parallel trends — says \\(\\mathbb{E}(Y_{0i,post} - Y_{0i,pre}|D_i=1) = \\mathbb{E}(Y_{0i,post} - Y_{0i,pre}|D_i=0)\\). This is untestable in the post-period (since we don't observe the counterfactual), but it can be probed pre-treatment: if the two groups had parallel trends in prior periods, it is more plausible they would have continued in parallel absent treatment. Common diagnostics include event-study plots and placebo tests using earlier periods as the fake \"treatment\" date."
+  },
+  {
+    chapter: "Ch8 · Policy Evaluation",
+    text: "Propensity score matching estimates the ATT by matching each treated unit to control units with similar \\(\\hat{p}(X_i) = \\hat{\\Pr}(D_i=1|X_i)\\). What is the main identifying assumption?",
+    options: [
+      "Conditional independence (CIA) / selection on observables: \\((Y_{1i}, Y_{0i}) \\perp D_i \\mid X_i\\) — once you control for observed covariates, treatment assignment is as good as random",
+      "The instrument \\(Z_i\\) satisfies the exclusion restriction and monotonicity",
+      "Treatment effects are homogeneous across all individuals",
+      "The propensity score is correctly specified as a Probit model"
+    ],
+    correct: 0,
+    explanation: "Matching relies on the Conditional Independence Assumption (CIA) or 'selection on observables': all confounders are captured in \\(X_i\\). Given \\(X_i\\), treated and control units have the same distribution of potential outcomes. The propensity score theorem (Rosenbaum & Rubin 1983) shows that matching on \\(p(X_i)\\) is sufficient — you don't need to match on the full \\(X_i\\). The CIA is strong: it fails whenever there are unobserved variables that jointly affect selection and the outcome. Unlike IV, matching does not address selection on unobservables."
+  },
+
+  // ══════════════════════════════════════════════════════════════════
+  //  CH9 · TREATMENT EFFECTS & THE ROY MODEL
+  // ══════════════════════════════════════════════════════════════════
+
+  {
+    chapter: "Ch9 · Treatment Effects & Roy",
+    text: "The Roy Model is a model of self-selection based on comparative advantage. Suppose an individual with \\(y_{2i}^* > y_{3i}^*\\) (college potential earnings exceed high school) will choose college. Why does regressing observed earnings \\(Y_i\\) on \\(X_{2i}\\) by OLS (using only college graduates) not identify \\(\\beta_2\\)?",
+    options: [
+      "Because the sample size is too small",
+      "Because individuals self-select into college based on unobservable ability \\(\\varepsilon_{2i}\\), which is correlated with \\(\\varepsilon_{1i} = \\varepsilon_{2i} - \\varepsilon_{3i}\\); the OLS error term includes \\(\\mathbb{E}(\\varepsilon_{2i}|\\varepsilon_{2i} - \\varepsilon_{3i} > -X_{1i}'\\beta_1)\\neq 0\\)",
+      "Because \\(X_{2i}\\) is endogenous due to measurement error",
+      "Because there are too many regressors relative to the number of observations"
+    ],
+    correct: 1,
+    explanation: "The selection rule \\(D_i=1\\) iff \\(y_{2i}^*>y_{3i}^*\\) means we observe college earnings only for individuals who prefer college. This creates a non-random subsample: college graduates are positively selected (they have higher \\(\\varepsilon_{2i}\\)). Formally, \\(\\mathbb{E}(Y_i|D_i=1,X_i) = X_{2i}'\\beta_2 + \\mathbb{E}(\\varepsilon_{2i}|\\varepsilon_{2i}>-X_{1i}'\\beta_1-\\varepsilon_{3i},X_i)\\). The second term is non-zero because \\(\\varepsilon_{2i}\\) and \\(\\varepsilon_{1i}\\) are correlated (\\(\\varepsilon_{1i}\\) contains \\(\\varepsilon_{2i}\\)). This is the classic self-selection/omitted variable bias first described by Roy (1951) and formalised by Heckman (1979)."
+  },
+  {
+    chapter: "Ch9 · Treatment Effects & Roy",
+    text: "Define ATE, ATT, and ATU in the potential outcomes framework. If there is positive selection into treatment (those with high gains select in), how do these three quantities rank?",
+    options: [
+      "ATE = ATT = ATU always, by the law of iterated expectations",
+      "ATT > ATE > ATU: the treated have above-average treatment effects (positive selection), so ATT is highest; the untreated have below-average effects, so ATU is lowest",
+      "ATU > ATE > ATT: the untreated would benefit more from treatment",
+      "The ordering depends on whether treatment effects are heterogeneous"
+    ],
+    correct: 1,
+    explanation: "With positive selection, individuals who self-select into treatment are those with the highest treatment gains \\((Y_{1i}-Y_{0i})\\). Formally: \\(\\text{ATT} = \\mathbb{E}(Y_1-Y_0|D=1) > \\mathbb{E}(Y_1-Y_0) = \\text{ATE} > \\mathbb{E}(Y_1-Y_0|D=0) = \\text{ATU}\\). This is the key reason why the 'wrong' experiment (self-selected participation) overstates the benefit for the average person. A programme evaluation comparing voluntary participants to non-participants gives ATT, not ATE. If the programme were expanded to the ATU population, the average gains would be smaller."
+  },
+  {
+    chapter: "Ch9 · Treatment Effects & Roy",
+    text: "The treatment effect \\(Y_{1i} - Y_{0i}\\) in the correlated random coefficients model has two components: \\((\\mu_1(X_i) - \\mu_0(X_i))\\) and \\((u_{1i} - u_{0i})\\). What does the second component represent, and why does it matter for OLS?",
+    options: [
+      "It represents measurement error and attenuates OLS estimates",
+      "It is the individual-level idiosyncratic gain (unobserved by the econometrician but known by the individual when making their decision). When individuals select into treatment partly based on this gain, OLS captures a mixture of average effects and selection-on-gains bias",
+      "It represents the effect of unobserved instruments",
+      "It is always zero in large samples by the law of large numbers"
+    ],
+    correct: 1,
+    explanation: "The model is \\(Y_i = \\mu_0(X_i) + D_i(\\mu_1(X_i)-\\mu_0(X_i)) + D_i(u_{1i}-u_{0i}) + u_{0i}\\). The term \\(D_i(u_{1i}-u_{0i})\\) creates correlation between the treatment indicator \\(D_i\\) and the error \\(u_{1i}-u_{0i}\\) whenever individuals select into treatment based on their idiosyncratic gain. This is 'selection on gains' (as opposed to 'selection on levels'). OLS then estimates a blend of the average effect and the covariance of \\(D_i\\) with gains. Heckman's correlated random coefficients model and MTE (Marginal Treatment Effect) framework are designed to separate these components."
+  },
+
+  // ══════════════════════════════════════════════════════════════════
+  //  CH10 · PANEL DATA DISCRETE CHOICES
+  // ══════════════════════════════════════════════════════════════════
+
+  {
+    chapter: "Ch10 · Panel Discrete Choices",
+    text: "In panel data on binary outcomes, persistent correlation \\(\\text{Corr}(P_i(t), P_i(t+1)) > 0\\) can arise from three sources. Which source is called 'true state dependence'?",
+    options: [
+      "Time-invariant individual heterogeneity: individual \\(i\\) always has a high (or low) propensity for the outcome",
+      "Serially correlated shocks: the same random shock hits individual \\(i\\) in consecutive periods",
+      "True state dependence: past realisation \\(Y_{i,t-1} = 1\\) directly and causally increases the probability of \\(Y_{it} = 1\\) (habit formation, human capital, stigma)",
+      "Measurement error in the outcome variable"
+    ],
+    correct: 2,
+    explanation: "True state dependence means \\(\\Pr(Y_{it}=1|Y_{i,t-1}=1) > \\Pr(Y_{it}=1|Y_{i,t-1}=0)\\) for a causal reason: once a choice is made, it directly raises the utility/probability of the same choice in the future. Examples include brand loyalty (prior purchase raises switching costs), employment (hiring costs make firms retain workers), and criminal recidivism (incarceration raises future crime probability). This must be distinguished from spurious state dependence due to unobserved heterogeneity: someone who always had a high propensity will appear persistent even without causal state dependence."
+  },
+  {
+    chapter: "Ch10 · Panel Discrete Choices",
+    text: "Why is the Fixed Effects Probit estimator inconsistent in panels with short \\(T\\)?",
+    options: [
+      "Because the Probit likelihood is not concave in the fixed effects",
+      "Because of the 'incidental parameters problem': estimating \\(N\\) individual fixed effects \\(c_i\\) introduces \\(N\\) nuisance parameters, and with fixed \\(T\\), the MLE of \\(c_i\\) is inconsistent, which contaminates the estimate of \\(\\beta\\)",
+      "Because the Probit likelihood is not identified with fixed effects",
+      "Because Fixed Effects Probit requires \\(T \\geq 5\\) for consistency"
+    ],
+    correct: 1,
+    explanation: "The incidental parameters problem (Neyman & Scott 1948) arises because the MLE of each \\(c_i\\) is based on only \\(T\\) observations. As \\(N \\to \\infty\\) with \\(T\\) fixed, we have \\(N\\) parameters estimated from \\(T\\) observations each — the \\(\\hat{c}_i\\) are not consistent, and the inconsistency in \\(\\hat{c}_i\\) biases \\(\\hat{\\beta}\\). For the Probit model, the bias in \\(\\hat{\\beta}\\) is approximately \\(\\times\\) 2 upward (away from zero) for \\(T=2\\). In contrast, the Fixed Effects Logit (Chamberlain) avoids this problem by conditioning out \\(c_i\\) through a sufficient statistic."
+  },
+  {
+    chapter: "Ch10 · Panel Discrete Choices",
+    text: "Chamberlain's Fixed Effects Logit conditions on \\(\\sum_t Y_{it}\\) to eliminate \\(c_i\\). What is the implication for individuals who never switch outcome (\\(Y_{it}=0\\) or \\(Y_{it}=1\\) in all periods)?",
+    options: [
+      "They contribute strongly to identification since they reveal the baseline propensity \\(c_i\\)",
+      "They contribute nothing to the conditional likelihood — only 'switchers' (\\(0 < \\sum_t Y_{it} < T\\)) identify \\(\\beta\\)",
+      "They must be dropped from the sample before estimation",
+      "Their fixed effects \\(c_i\\) are estimated precisely from their constant outcomes"
+    ],
+    correct: 1,
+    explanation: "In the conditional likelihood \\(\\Pr(\\mathbf{Y}_i|\\sum_t Y_{it}, X_i)\\), the conditioning event for a non-switcher (\\(\\sum Y_{it}=0\\) or \\(T\\)) has probability 1 — there is only one sequence consistent with the sum. The log-likelihood contribution is \\(\\ln(1)=0\\). Non-switchers are perfectly explained by any value of \\(\\beta\\) and carry no information. This is a cost of the FE Logit approach: if few individuals switch, estimation is based on a small fraction of the sample and can be imprecise. It also means time-invariant regressors (e.g. gender, race) cannot be identified."
+  },
+  {
+    chapter: "Ch10 · Panel Discrete Choices",
+    text: "Wooldridge's (2005) solution to the initial conditions problem in dynamic panel Probit assumes \\(c_i | Y_{i0}, X_i \\sim \\mathcal{N}(\\alpha_0 + \\alpha_1 Y_{i0}, \\sigma_a^2)\\). What is the intuition behind this approach?",
+    options: [
+      "It treats the initial observation \\(Y_{i0}\\) as exogenous, conditioning on it in a first-stage regression",
+      "Rather than modelling the marginal distribution of \\(c_i\\) (which requires integrating out \\(Y_{i0}\\)), it models the distribution of \\(c_i\\) conditional on the observed initial condition \\(Y_{i0}\\), allowing the heterogeneity and the initial state to be correlated — this is then integrated out over the distribution of \\(c_i|Y_{i0}\\)",
+      "It instruments \\(Y_{i0}\\) using pre-sample covariates to obtain a consistent estimator",
+      "It assumes \\(Y_{i0}\\) is determined by the steady state of the model"
+    ],
+    correct: 1,
+    explanation: "The initial conditions problem: \\(Y_{i0}\\) is itself determined partly by \\(c_i\\), so conditioning on \\(Y_{i0}\\) alone does not solve the endogeneity. Heckman's (1981) solution models the marginal density of \\(Y_{i0}\\) jointly, but requires an auxiliary structural equation. Wooldridge's simpler approach models the conditional distribution \\(c_i|Y_{i0}\\) as normal with a mean that depends on \\(Y_{i0}\\) (and possibly \\(X_i\\)). This acknowledges the correlation between \\(c_i\\) and \\(Y_{i0}\\) without modelling its origin. The resulting random effects Probit augmented with \\(Y_{i0}\\) as a regressor in the correlated random effects equation can then be estimated by standard RE Probit software."
+  },
+
+  // ══════════════════════════════════════════════════════════════════
+  //  CH11 · DURATION DATA ANALYSIS
+  // ══════════════════════════════════════════════════════════════════
+
+  {
+    chapter: "Ch11 · Duration Analysis",
+    text: "The hazard function \\(h(t)\\) is defined as the instantaneous rate of leaving a state at time \\(t\\), conditional on having survived until \\(t\\). Which formula correctly relates \\(h(t)\\) to the survivor \\(S(t)\\) and density \\(f(t)\\)?",
+    options: [
+      "\\(h(t) = f(t) \\cdot S(t)\\)",
+      "\\(h(t) = f(t) / S(t) = -d\\ln S(t)/dt\\)",
+      "\\(h(t) = S(t) / f(t)\\)",
+      "\\(h(t) = 1 - S(t)\\)"
+    ],
+    correct: 1,
+    explanation: "By definition, \\(h(t) = \\lim_{\\Delta t \\to 0} \\Pr(t \\leq T < t+\\Delta t|T \\geq t)/\\Delta t = f(t)/S(t)\\). Since \\(S(t) = \\exp(-\\Lambda(t))\\) where \\(\\Lambda(t) = \\int_0^t h(u)du\\), we have \\(-d\\ln S(t)/dt = h(t)\\). These relations allow recovery of any one function from any other: given \\(h(t)\\), we can compute \\(\\Lambda(t)\\), then \\(S(t)\\), then \\(f(t)\\). In discrete time, \\(h_t = \\Pr(T=t|T \\geq t)\\) and \\(S(t) = \\prod_{s \\leq t}(1-h_s)\\)."
+  },
+  {
+    chapter: "Ch11 · Duration Analysis",
+    text: "The Exponential distribution has a constant hazard \\(h(t) = \\lambda\\). What is the 'memoryless property' and what does it imply economically?",
+    options: [
+      "The mean duration is infinite — individuals never exit the state",
+      "\\(\\Pr(T > s+t | T > s) = \\Pr(T > t)\\) for all \\(s,t > 0\\): the remaining time in the state is independent of how long one has already been there; economically, there is no duration dependence — the re-employment probability does not change with unemployment duration",
+      "The hazard increases with time, so shorter spells are more likely to end",
+      "The hazard decreases exponentially, favouring very short durations"
+    ],
+    correct: 1,
+    explanation: "The memoryless (Markov) property: \\(\\Pr(T>s+t|T>s) = e^{-\\lambda t} = \\Pr(T>t)\\). The probability of surviving another \\(t\\) periods is the same regardless of how long you have already survived. Economically: the re-employment hazard of an unemployed worker does not depend on how long they have been unemployed. This is often rejected empirically — negative duration dependence (declining hazard) is common in unemployment spells. The Weibull model generalises the exponential: \\(h(t) = \\lambda\\alpha t^{\\alpha-1}\\), with \\(\\alpha < 1\\) for negative duration dependence and \\(\\alpha > 1\\) for positive."
+  },
+  {
+    chapter: "Ch11 · Duration Analysis",
+    text: "An unemployment study follows 200 workers for a maximum of 12 months. After 12 months, 40 workers are still unemployed. How do these 40 workers enter the likelihood?",
+    options: [
+      "They are dropped from the sample since their true duration is unknown",
+      "Their contribution to the likelihood is \\(f(t_c)\\), the density at the censoring point",
+      "Their contribution to the likelihood is \\(S(t_c) = \\Pr(T > t_c)\\) — the probability of surviving beyond the censoring point",
+      "They are assigned duration \\(T_i = 12\\) months with a dummy variable indicating censoring"
+    ],
+    correct: 2,
+    explanation: "For a right-censored observation at \\(t_c\\), we know only that the true duration \\(T_i^* > t_c\\). The likelihood contribution is \\(\\Pr(T_i^* > t_c) = S(t_c; X_i, \\theta)\\). The full likelihood for all \\(N\\) observations is \\(L(\\theta) = \\prod_{i=1}^N f(t_i)^{c_i} S(t_i)^{1-c_i}\\), where \\(c_i = 1\\) if uncensored and \\(c_i = 0\\) if censored. Dropping censored observations would discard information and create truncation bias. The density \\(f(t_c)\\) would be incorrect — it would assume the spell ended at \\(t_c\\), which is wrong."
+  },
+  {
+    chapter: "Ch11 · Duration Analysis",
+    text: "In the Proportional Hazards (PH) model, \\(h(t;X_i,\\beta) = h_0(t)\\exp(X_i'\\beta)\\). What does the 'proportional' part mean, and why is this important for interpretation?",
+    options: [
+      "The hazard is proportional to time — it can only increase",
+      "The ratio of hazards for two individuals with different covariates \\(X_i\\) and \\(X_j\\) is constant over time: \\(h(t;X_i)/h(t;X_j) = \\exp((X_i-X_j)'\\beta)\\) — the effect of covariates does not depend on \\(t\\)",
+      "The hazard is proportional to the survivor function at each point in time",
+      "The baseline hazard \\(h_0(t)\\) must be proportional to \\(\\exp(X_i'\\beta)\\)"
+    ],
+    correct: 1,
+    explanation: "In the PH model, the ratio of two hazards is \\(h(t;X_i)/h(t;X_j) = \\exp((X_i-X_j)'\\beta)\\), which is constant across time — hence 'proportional.' This has an important interpretation: the effect of, say, education on the unemployment exit rate (\\(\\exp(\\beta_{edu})\\)) multiplies the baseline hazard by the same factor at every duration. The PH assumption is testable (e.g., by checking if the scaled Schoenfeld residuals trend with time). Cox's (1972) partial likelihood estimates \\(\\beta\\) without specifying \\(h_0(t)\\), making it semiparametric and robust to misspecification of the baseline hazard."
+  },
+  {
+    chapter: "Ch11 · Duration Analysis",
+    text: "In a sample of 200 unemployed workers (100 'fast' type with \\(h=0.4\\), 100 'slow' type with \\(h=0.1\\)), an econometrician ignores the type distinction and estimates the aggregate hazard. What pattern will they observe over time?",
+    options: [
+      "A constant hazard equal to the average \\((0.4+0.1)/2 = 0.25\\)",
+      "A declining hazard over time: at early durations the fast-exit types still dominate the risk set, but as they exit, the remaining population is increasingly composed of slow-exit types, pulling the aggregate hazard down",
+      "An increasing hazard because surviving longer reveals higher ability",
+      "A U-shaped hazard: first declining then increasing"
+    ],
+    correct: 1,
+    explanation: "This is the classic dynamic selection (dynamic sorting) problem. Initially, both types are in the sample: aggregate hazard ≈ 0.25. As time passes, the fast-exit types (\\(h=0.4\\)) leave the sample much more rapidly. The remaining risk set becomes increasingly dominated by slow-exit types (\\(h=0.1\\)). The observed aggregate hazard therefore declines over time even though each individual's hazard is constant. This is called 'spurious negative duration dependence'. The Mixed Proportional Hazard (MPH) model, which includes a frailty term \\(v_i\\), is designed to separate true duration dependence (in \\(h_0(t)\\)) from spurious dependence caused by unobserved heterogeneity."
+  },
+  {
+    chapter: "Ch11 · Duration Analysis",
+    text: "The Cox Proportional Hazards model estimates \\(\\beta\\) via a partial likelihood that does not require specifying \\(h_0(t)\\). What is the trade-off compared to a fully parametric model (e.g. Weibull)?",
+    options: [
+      "The Cox model is always preferred — it makes no assumptions and gives identical estimates to the Weibull when the Weibull is correct",
+      "The Cox model is semiparametric and more robust (valid even if \\(h_0(t)\\) is misspecified), but is less efficient than the Weibull when the Weibull is correctly specified; the Weibull can also estimate \\(h_0(t)\\) and hence predict survival probabilities",
+      "The Weibull is always preferred because it uses all the information in the likelihood",
+      "The Cox model requires stronger assumptions than the Weibull because it uses partial rather than full likelihood"
+    ],
+    correct: 1,
+    explanation: "The Cox model's partial likelihood ignores the information in the exact spacing between failure times (only the ordering matters). If the Weibull baseline is correctly specified, the parametric MLE achieves a lower asymptotic variance — it is more efficient. However, if \\(h_0(t)\\) is misspecified (e.g., non-monotone hazard), the Weibull MLE is biased while Cox remains consistent. Cox is also preferred when the scientific question is about covariate effects rather than the shape of duration dependence. In practice, Cox is the workhorse model in epidemiology and labour economics; parametric models are used when the full hazard function is needed."
+  },
+  {
+    chapter: "Ch11 · Duration Analysis",
+    text: "Discrete-time hazard models are estimated by converting duration data into a person-period dataset. What is the statistical structure of the resulting estimation problem?",
+    options: [
+      "It becomes a linear probability model estimated by OLS",
+      "Each person-period observation becomes a binary outcome (\\(Y_{it}=1\\) if exits in period \\(t\\), \\(Y_{it}=0\\) if not), and the log-likelihood is mathematically identical to a pooled binary choice (Logit or Probit) likelihood with time-varying regressors",
+      "It becomes a Tobit model because some durations are censored",
+      "It must be estimated as a multinomial logit across all duration lengths"
+    ],
+    correct: 1,
+    explanation: "For individual \\(i\\) with observed duration \\(t_i\\), the discrete-time likelihood is \\(\\prod_{s=1}^{t_i-1}(1-h_s) \\cdot h_{t_i}^{c_i}(1-h_{t_i})^{1-c_i}\\). If we define \\(Y_{it}=1\\) when the person exits in period \\(t\\) and \\(Y_{it}=0\\) otherwise, and stack all person-period observations, the log-likelihood becomes \\(\\sum_i\\sum_t [Y_{it}\\ln h_{it} + (1-Y_{it})\\ln(1-h_{it})]\\), which is exactly the pooled binary choice log-likelihood. This means standard Logit/Probit software can estimate discrete-time hazard models. Including duration dummies or a polynomial in \\(t\\) captures duration dependence."
+  }
+
+];
+
+// ── State ────────────────────────────────────────────────────
+let answered = 0, correct = 0, wrong = 0;
+let chapterScores = {};
+let shuffled = []; // stores { options, correct } after shuffling
+
+function startQuiz() {
+  document.getElementById('start-screen').style.display = 'none';
+  document.getElementById('quiz-area').style.display = 'block';
+  renderQuestions();
+}
+
+function shuffleOptions(q) {
+  // Build index array [0,1,2,3], shuffle it, then remap correct index
+  const indices = [0, 1, 2, 3];
+  for (let i = indices.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [indices[i], indices[j]] = [indices[j], indices[i]];
+  }
+  return {
+    options: indices.map(k => q.options[k]),
+    correct: indices.indexOf(q.correct)
+  };
+}
+
+function renderQuestions() {
+  const area = document.getElementById('quiz-area');
+  area.innerHTML = '';
+  shuffled = [];
+  const letters = ['A', 'B', 'C', 'D'];
+  QUESTIONS.forEach((q, i) => {
+    const s = shuffleOptions(q);
+    shuffled.push(s);
+    const card = document.createElement('div');
+    card.className = 'card';
+    card.id = `card-${i}`;
+    const optsHtml = s.options.map((opt, j) =>
+      `<div class="opt" id="opt-${i}-${j}" onclick="answer(${i},${j})">
+        <div class="opt-letter">${letters[j]}</div>
+        <div>${opt}</div>
+      </div>`
+    ).join('');
+    card.innerHTML = `
+      <div class="chapter-badge">${q.chapter}</div>
+      <div class="q-number">Question ${i+1} of ${QUESTIONS.length}</div>
+      <div class="q-text">${q.text}</div>
+      <div class="options" id="opts-${i}">${optsHtml}</div>
+      <div class="explanation" id="exp-${i}"></div>
+    `;
+    area.appendChild(card);
+  });
+  // Typeset MathJax after rendering
+  if (window.MathJax) MathJax.typesetPromise();
+}
+
+function answer(qi, chosen) {
+  const q = QUESTIONS[qi];
+  const s = shuffled[qi];
+  const card = document.getElementById(`card-${qi}`);
+  if (card.classList.contains('answered-correct') || card.classList.contains('answered-wrong')) return;
+
+  const isCorrect = (chosen === s.correct);
+  const letters = ['A','B','C','D'];
+
+  for (let j = 0; j < s.options.length; j++) {
+    const opt = document.getElementById(`opt-${qi}-${j}`);
+    opt.classList.add('disabled');
+    if (j === s.correct && !isCorrect) opt.classList.add('show-correct');
+  }
+  const chosenOpt = document.getElementById(`opt-${qi}-${chosen}`);
+  chosenOpt.classList.add(isCorrect ? 'correct-ans' : 'wrong-ans');
+  card.classList.add(isCorrect ? 'answered-correct' : 'answered-wrong');
+
+  const exp = document.getElementById(`exp-${qi}`);
+  exp.className = `explanation ${isCorrect ? 'correct' : 'wrong'}`;
+  const verdict = isCorrect ? '✅ Correct!' : ('❌ Incorrect — the right answer was ' + letters[s.correct]);
+  exp.innerHTML = '<div class="verdict">' + verdict + '</div>' + q.explanation;
+  exp.style.display = 'block';
+
+  answered++; if (isCorrect) correct++; else wrong++;
+  const ch = q.chapter;
+  if (!chapterScores[ch]) chapterScores[ch] = { correct:0, total:0 };
+  chapterScores[ch].total++;
+  if (isCorrect) chapterScores[ch].correct++;
+
+  document.getElementById('stat-total').textContent = answered;
+  document.getElementById('stat-correct').textContent = correct;
+  document.getElementById('stat-wrong').textContent = wrong;
+  document.getElementById('progress-bar').style.width = `${(answered/QUESTIONS.length)*100}%`;
+
+  // Typeset newly revealed explanation
+  if (window.MathJax) MathJax.typesetPromise([exp]);
+
+  const next = document.getElementById(`card-${qi+1}`);
+  if (next) setTimeout(() => next.scrollIntoView({behavior:'smooth',block:'center'}), 450);
+  if (answered === QUESTIONS.length) setTimeout(showResults, 900);
+}
+
+function showResults() {
+  document.getElementById('quiz-area').style.display = 'none';
+  document.getElementById('score-bar').style.display = 'none';
+  const results = document.getElementById('results');
+  results.style.display = 'block';
+  document.getElementById('score-display').textContent = `${correct} / ${QUESTIONS.length}`;
+  const pct = Math.round((correct/QUESTIONS.length)*100);
+  document.getElementById('score-pct').textContent = `${pct}% correct`;
+
+  let grade, color, bg;
+  if (pct >= 85)      { grade = '🏆 Excellent!';            color = '#1a5c30'; bg = '#d4edda'; }
+  else if (pct >= 70) { grade = '👍 Good job!';              color = '#4a5c1a'; bg = '#f0f4d4'; }
+  else if (pct >= 55) { grade = '📚 Keep studying';          color = '#7a4a00'; bg = '#fff3cd'; }
+  else                { grade = '💪 More revision needed';   color = '#7a1a1a'; bg = '#f8d7da'; }
+
+  document.getElementById('grade-badge-wrap').innerHTML =
+    `<div class="grade-badge" style="background:${bg};color:${color}">${grade}</div>`;
+
+  const breakdown = document.getElementById('breakdown');
+  breakdown.innerHTML = '';
+  Object.entries(chapterScores).forEach(([ch, sc]) => {
+    const pctCh = Math.round((sc.correct/sc.total)*100);
+    const div = document.createElement('div');
+    div.className = 'ch-score';
+    div.innerHTML = `<div class="ch-name">${ch}</div><div class="ch-frac">${sc.correct}/${sc.total} (${pctCh}%)</div>`;
+    breakdown.appendChild(div);
+  });
+  results.scrollIntoView({behavior:'smooth',block:'start'});
+}
+
+function restartQuiz() {
+  answered = 0; correct = 0; wrong = 0; chapterScores = {};
+  ['stat-total','stat-correct','stat-wrong'].forEach(id => document.getElementById(id).textContent = '0');
+  document.getElementById('progress-bar').style.width = '0%';
+  document.getElementById('results').style.display = 'none';
+  document.getElementById('score-bar').style.display = 'flex';
+  document.getElementById('quiz-area').style.display = 'block';
+  renderQuestions();
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+</script>
+</body>
+</html>
